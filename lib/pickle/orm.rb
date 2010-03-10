@@ -46,11 +46,11 @@ module Pickle
     end
     
     def self.first(model_class, conditions={})
-      model_class.first(:conditions => convert_nested_models_to_attributes(model_class, fields))
+      model_class.first(:conditions => convert_nested_models_to_attributes(model_class, conditions[:conditions]))
     end
     
     def self.all(model_class, conditions={})
-      model_class.all(:conditions => convert_nested_models_to_attributes(model_class, fields))
+      model_class.all(:conditions => convert_nested_models_to_attributes(model_class, conditions[:conditions]))
     end
     
     def self.find(model_class, id)
@@ -65,15 +65,20 @@ module Pickle
     end
     
     def self.convert_nested_models_to_attributes(model_class, attrs)
-      attrs
+      attrs.each do |key, val|
+        if val.is_a?(MongoMapper::Document)
+          attrs["#{key}_id"] = val.id
+          attrs.delete(key)
+        end
+      end
     end
     
     def self.first(model_class, conditions={})
-      model_class.first(:conditions => convert_nested_models_to_attributes(model_class, conditions))
+      model_class.first(:conditions => convert_nested_models_to_attributes(model_class, conditions[:conditions]))
     end
     
     def self.all(model_class, conditions={})
-      model_class.all(:conditions => convert_nested_models_to_attributes(model_class, conditions))
+      model_class.all(:conditions => convert_nested_models_to_attributes(model_class, conditions[:conditions]))
     end
     
     def self.find(model_class, id)
