@@ -207,6 +207,44 @@ describe Pickle::Session do
     end
   end
   
+  describe "create and find using plural_factory and table" do
+    context "when given a table without a matching pickle ref column" do
+      before do
+        @table = mock(:hashes => [{'name' => 'Fred'}, {'name' => 'Betty'}])
+      end
+      
+      it "#create_models_from_table(<plural factory>, <table>) should call create_model for each of the table hashes with plain factory name" do
+        should_receive(:create_model).with("user", 'name' => "Fred").once.ordered
+        should_receive(:create_model).with("user", 'name' => "Betty").once.ordered
+        create_models_from_table("users", @table)
+      end
+      
+      it "#find_models_from_table(<plural factory>, <table>) should call find_model for each of the table hashes with plain factory name" do
+        should_receive(:find_model).with("user", 'name' => "Fred").once.ordered
+        should_receive(:find_model).with("user", 'name' => "Betty").once.ordered
+        find_models_from_table("users", @table)
+      end
+    end
+    
+    context "when given a table with a matching pickle ref column" do
+      before do
+        @table = mock(:hashes => [{'user' => "fred", 'name' => 'Fred'}, {'user' => "betty", 'name' => 'Betty'}])
+      end
+      
+      it "#create_models_from_table(<plural factory>, <table>) should call create_model for each of the table hashes with labelled pickle ref" do
+        should_receive(:create_model).with("user \"fred\"", 'name' => "Fred").once.ordered
+        should_receive(:create_model).with("user \"betty\"", 'name' => "Betty").once.ordered
+        create_models_from_table("users", @table)
+      end
+      
+      it "#find_models_from_table(<plural factory>, <table>) should call find_model for each of the table hashes with labelled pickle ref" do
+        should_receive(:find_model).with("user \"fred\"", 'name' => "Fred").once.ordered
+        should_receive(:find_model).with("user \"betty\"", 'name' => "Betty").once.ordered
+        find_models_from_table("users", @table)
+      end
+    end
+  end
+  
   describe "#find_model!" do
     it "should call find_model" do
       should_receive(:find_model).with('name', 'fields').and_return(mock('User'))
@@ -215,7 +253,7 @@ describe Pickle::Session do
 
     it "should call raise error if find_model returns nil" do
       should_receive(:find_model).with('name', 'fields').and_return(nil)
-      lambda { find_model!('name', 'fields') }.should raise_error
+      lambda { find_model!('name', 'fields') }.should raise_error(RuntimeError, "Can't find pickle model: 'name' in this scenario")
     end
   end
   

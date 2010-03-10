@@ -66,6 +66,8 @@ The following people have made Pickle better:
 * {Tobi Knaup}[http://github.com/guenter]
 * {Michael MacDonald}[http://github.com/schlick]
 * {Michael Moen}[http://github.com/UnderpantsGnome]
+* {Myron Marston}[http://github.com/myronmarston]
+* {Stephan Hagemann}[http://github.com/xing]
 
 == Get Started
 
@@ -197,6 +199,17 @@ You can use other models, booleans, numerics, and strings as fields
 "Then <b>n models</b> should exist with <b>fields</b>", e.g.
 
   Then 2 people should exist with father: person "fred"
+  
+"Then the following <b>models</b> exist". This allows the creation of multiple models
+using a table syntax. Using a column with the singularized name of the model creates a referenceable model. E.g.
+
+  Then the following users exist:
+    | name   | activated |
+    | Freddy | false     |
+
+  Then the following users exist:
+    | user | name   | activated |
+    | Fred | Freddy | false     |
   
 ===== Asserting associations
 

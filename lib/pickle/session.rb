@@ -20,12 +20,21 @@ module Pickle
       end
     end
     
-    def create_model(a_model_name, fields = nil)
-      factory, label = *parse_model(a_model_name)
+    def create_model(pickle_ref, fields = nil)
+      factory, label = *parse_model(pickle_ref)
       raise ArgumentError, "Can't create with an ordinal (e.g. 1st user)" if label.is_a?(Integer)
       fields = fields.is_a?(Hash) ? parse_hash(fields) : parse_fields(fields)
       record = pickle_config.factories[factory].create(fields)
       store_model(factory, label, record)
+    end
+    
+    # if a column exists in the table which matches the singular factory name, this is used as the pickle ref
+    def create_models_from_table(plural_factory, table)
+      factory = plural_factory.singularize
+      table.hashes.each do |hash|
+        pickle_ref = factory + (hash[factory] ? " \"#{hash.delete(factory)}\"" : "")
+        create_model(pickle_ref, hash)
+      end
     end
 
     def find_model(a_model_name, fields = nil)
@@ -48,7 +57,16 @@ module Pickle
       records = pickle_config.orm.all(model_class, :conditions => convert_models_to_attributes(model_class, parse_fields(fields)))
       records.each {|record| store_model(factory, nil, record)}
     end
-      
+    
+    # if a column exists in the table which matches the singular factory name, this is used as the pickle ref
+    def find_models_from_table(plural_factory, table)
+      factory = plural_factory.singularize
+      table.hashes.each do |hash|
+        pickle_ref = factory + (hash[factory] ? " \"#{hash.delete(factory)}\"" : "")
+        find_model(pickle_ref, hash)
+      end
+    end
+    
     # return the original model stored by create_model or find_model
     def created_model(name)
       factory, name_or_index = *parse_model(name)
