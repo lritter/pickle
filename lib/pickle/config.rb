@@ -2,7 +2,7 @@ require 'ostruct'
 
 module Pickle
   class Config
-    attr_writer :adapters, :factories, :mappings, :predicates
+    attr_writer :adapters, :factories, :mappings, :predicates, :orm
     
     def initialize(&block)
       configure(&block) if block_given?
@@ -16,6 +16,10 @@ module Pickle
       @adapters ||= [:machinist, :factory_girl, :active_record]
     end
     
+    def orm
+      @orm ||= Pickle::ActiveRecordAdapter
+    end
+    
     def adapter_classes
       adapters.map {|a| a.is_a?(Class) ? a : "pickle/adapter/#{a}".classify.constantize}
     end
@@ -27,7 +31,7 @@ module Pickle
     end
     
     def predicates
-      @predicates ||= Pickle::Adapter.model_classes.map do |k|
+      @predicates ||= orm.model_classes.map do |k|
         k.public_instance_methods.select{|m| m =~ /\?$/} + k.column_names
       end.flatten.uniq
     end

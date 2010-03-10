@@ -33,7 +33,7 @@ module Pickle
       raise ArgumentError, "Can't find a model with an ordinal (e.g. 1st user)" if name.is_a?(Integer)
       model_class = pickle_config.factories[factory].klass
       fields = fields.is_a?(Hash) ? parse_hash(fields) : parse_fields(fields)
-      if record = model_class.find(:first, :conditions => convert_models_to_attributes(model_class, fields))
+      if record = pickle_config.orm.first(model_class, :conditions => convert_models_to_attributes(model_class, fields))
         store_model(factory, name, record)
       end
     end
@@ -45,7 +45,7 @@ module Pickle
     def find_models(factory, fields = nil)
       models_by_index(factory).clear
       model_class = pickle_config.factories[factory].klass
-      records = model_class.find(:all, :conditions => convert_models_to_attributes(model_class, parse_fields(fields)))
+      records = pickle_config.orm.all(model_class, :conditions => convert_models_to_attributes(model_class, parse_fields(fields)))
       records.each {|record| store_model(factory, nil, record)}
     end
       
@@ -123,14 +123,8 @@ module Pickle
       pickle_parser.config
     end
 
-    def convert_models_to_attributes(ar_class, attrs)
-      attrs.each do |key, val|
-        if val.is_a?(ActiveRecord::Base) && ar_class.column_names.include?("#{key}_id")
-          attrs["#{key}_id"] = val.id
-          attrs["#{key}_type"] = val.class.name if ar_class.column_names.include?("#{key}_type")
-          attrs.delete(key)
-        end
-      end
+    def convert_models_to_attributes(model_class, attrs)
+      pickle_config.orm.convert_nested_models_to_attributes(model_class, attrs)
     end
     
     def models_by_name(factory)
