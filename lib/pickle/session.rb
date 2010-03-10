@@ -69,7 +69,7 @@ module Pickle
     
     # return a newly selected model
     def model(name)
-      (model = created_model(name)) && model.class.find(model.id)
+      (model = created_model(name)) && pickle_config.orm.find(model.class, model.id)
     end
     
     # predicate version which raises no errors
@@ -94,7 +94,7 @@ module Pickle
       
     # return all models of specified type (freshly selected from the database)
     def models(factory)
-      created_models(factory).map{|model| model.class.find(model.id) }
+      created_models(factory).map{|model| pickle_config.orm.find(model.class, model.id) }
     end
     
     def respond_to_with_pickle_parser?(method, include_private = false)
